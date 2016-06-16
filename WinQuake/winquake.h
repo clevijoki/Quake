@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -27,9 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef SERVERONLY
 #include <ddraw.h>
 #include <dsound.h>
-#ifndef GLQUAKE
-#include <mgraph.h>
-#endif
 #endif
 
 extern	HINSTANCE	global_hInstance;
@@ -73,6 +71,7 @@ void IN_ActivateMouse (void);
 void IN_RestoreOriginalMouseState (void);
 void IN_SetQuakeMouseState (void);
 void IN_MouseEvent (int mstate);
+void IN_Accumulate (void);
 
 extern qboolean	winsock_lib_initialized;
 
@@ -94,21 +93,42 @@ void S_UnblockSound (void);
 
 void VID_SetDefaultMode (void);
 
-int (PASCAL FAR *pWSAStartup)(WORD wVersionRequired, LPWSADATA lpWSAData);
-int (PASCAL FAR *pWSACleanup)(void);
-int (PASCAL FAR *pWSAGetLastError)(void);
-SOCKET (PASCAL FAR *psocket)(int af, int type, int protocol);
-int (PASCAL FAR *pioctlsocket)(SOCKET s, long cmd, u_long FAR *argp);
-int (PASCAL FAR *psetsockopt)(SOCKET s, int level, int optname,
-							  const char FAR * optval, int optlen);
-int (PASCAL FAR *precvfrom)(SOCKET s, char FAR * buf, int len, int flags,
-							struct sockaddr FAR *from, int FAR * fromlen);
-int (PASCAL FAR *psendto)(SOCKET s, const char FAR * buf, int len, int flags,
-						  const struct sockaddr FAR *to, int tolen);
-int (PASCAL FAR *pclosesocket)(SOCKET s);
-int (PASCAL FAR *pgethostname)(char FAR * name, int namelen);
-struct hostent FAR * (PASCAL FAR *pgethostbyname)(const char FAR * name);
-struct hostent FAR * (PASCAL FAR *pgethostbyaddr)(const char FAR * addr,
-												  int len, int type);
-int (PASCAL FAR *pgetsockname)(SOCKET s, struct sockaddr FAR *name,
-							   int FAR * namelen);
+typedef int (PASCAL FAR *PWSASTARTUP_FUNC)(WORD wVersionRequired, LPWSADATA lpWSAData);
+PWSASTARTUP_FUNC pWSAStartup;
+
+typedef int (PASCAL FAR *PWSACLEANUP_FUNC)(void);
+PWSACLEANUP_FUNC pWSACleanup;
+
+typedef int (PASCAL FAR *PWSAGETLASTERROR_FUNC)(void);
+PWSAGETLASTERROR_FUNC pWSAGetLastError;
+
+typedef SOCKET (PASCAL FAR *PSOCKET_FUNC)(int af, int type, int protocol);
+PSOCKET_FUNC psocket;
+
+typedef int (PASCAL FAR *PIOCTLSOCKET_FUNC)(SOCKET s, long cmd, u_long FAR *argp);
+PIOCTLSOCKET_FUNC pioctlsocket;
+
+typedef int (PASCAL FAR *PSETSOCKOPT_FUNC)(SOCKET s, int level, int optname, const char FAR * optval, int optlen);
+PSETSOCKOPT_FUNC psetsockopt;
+
+typedef int (PASCAL FAR *PRECVFROM_FUNC)(SOCKET s, char FAR * buf, int len, int flags, struct sockaddr FAR *from, int FAR * fromlen);
+PRECVFROM_FUNC precvfrom;
+
+typedef int (PASCAL FAR *PSENDTO_FUNC)(SOCKET s, const char FAR * buf, int len, int flags, const struct sockaddr FAR *to, int tolen);
+PSENDTO_FUNC psendto;
+
+typedef int (PASCAL FAR *PCLOSESOCKET_FUNC)(SOCKET s);
+PCLOSESOCKET_FUNC pclosesocket;
+
+typedef int (PASCAL FAR *PGETHOSTNAME_FUNC)(char FAR * name, int namelen);
+PGETHOSTNAME_FUNC pgethostname;
+
+typedef struct hostent FAR * (PASCAL FAR *PGETHOSTBYNAME_FUNC)(const char FAR * name);
+PGETHOSTBYNAME_FUNC pgethostbyname;
+
+typedef struct hostent FAR * (PASCAL FAR *PGETHOSTBYADDR_FUNC)(const char FAR * addr, int len, int type);
+PGETHOSTBYADDR_FUNC pgethostbyaddr;
+
+typedef int (PASCAL FAR *PGETSOCKNAME_FUNC)(SOCKET s, struct sockaddr FAR *name, int FAR * namelen);
+PGETSOCKNAME_FUNC pgetsockname;
+

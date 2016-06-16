@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -24,6 +25,11 @@ typedef unsigned char 		byte;
 #define BYTE_DEFINED 1
 #endif
 
+#if !defined STRING_T_DEFINED
+typedef struct string_s { int32_t value; } string_t;
+#define STRING_T_DEFINED
+#endif
+
 #undef true
 #undef false
 
@@ -36,16 +42,16 @@ typedef struct sizebuf_s
 	qboolean	allowoverflow;	// if false, do a Sys_Error
 	qboolean	overflowed;		// set to true if the buffer size failed
 	byte	*data;
-	int		maxsize;
-	int		cursize;
+	uint32_t	maxsize;
+	uint32_t	cursize;
 } sizebuf_t;
 
-void SZ_Alloc (sizebuf_t *buf, int startsize);
+void SZ_Alloc (sizebuf_t *buf, uint32_t startsize);
 void SZ_Free (sizebuf_t *buf);
 void SZ_Clear (sizebuf_t *buf);
-void *SZ_GetSpace (sizebuf_t *buf, int length);
-void SZ_Write (sizebuf_t *buf, void *data, int length);
-void SZ_Print (sizebuf_t *buf, char *data);	// strcats onto the sizebuf
+void *SZ_GetSpace (sizebuf_t *buf, uint32_t length);
+void SZ_Write (sizebuf_t *buf, const void *data, uint32_t length);
+void SZ_Print (sizebuf_t *buf, const char *data);	// strcats onto the sizebuf
 
 //============================================================================
 
@@ -63,7 +69,7 @@ void InsertLinkAfter (link_t *l, link_t *after);
 // (type *)STRUCT_FROM_LINK(link_t *link, type, member)
 // ent = STRUCT_FROM_LINK(link,entity_t,order)
 // FIXME: remove this mess!
-#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (int)&(((t *)0)->m)))
+#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (intptr_t)&(((t *)0)->m)))
 
 //============================================================================
 
@@ -87,13 +93,16 @@ void InsertLinkAfter (link_t *l, link_t *after);
 
 extern	qboolean		bigendien;
 
-extern	short	(*BigShort) (short l);
-extern	short	(*LittleShort) (short l);
-extern	int	(*BigLong) (int l);
-extern	int	(*LittleLong) (int l);
+extern	int16_t	(*BigShort) (int16_t l);
+extern	int16_t (*LittleShort) (int16_t l);
+extern	int32_t (*BigLong) (int32_t l);
+extern	int32_t (*LittleLong) (int32_t l); 
+extern	uint32_t (*BigULong) (uint32_t l);
+extern	uint32_t (*LittleULong) (uint32_t l);
 extern	float	(*BigFloat) (float l);
 extern	float	(*LittleFloat) (float l);
-
+extern	string_t (*BigString_t) (string_t l);
+extern	string_t (*LittleString_t) (string_t l);
 //============================================================================
 
 void MSG_WriteChar (sizebuf_t *sb, int c);
@@ -101,11 +110,11 @@ void MSG_WriteByte (sizebuf_t *sb, int c);
 void MSG_WriteShort (sizebuf_t *sb, int c);
 void MSG_WriteLong (sizebuf_t *sb, int c);
 void MSG_WriteFloat (sizebuf_t *sb, float f);
-void MSG_WriteString (sizebuf_t *sb, char *s);
+void MSG_WriteString (sizebuf_t *sb, const char *s);
 void MSG_WriteCoord (sizebuf_t *sb, float f);
 void MSG_WriteAngle (sizebuf_t *sb, float f);
 
-extern	int			msg_readcount;
+extern	uint32_t	msg_readcount;
 extern	qboolean	msg_badread;		// set if a read goes beyond end of message
 
 void MSG_BeginReading (void);
@@ -121,40 +130,40 @@ float MSG_ReadAngle (void);
 
 //============================================================================
 
-void Q_memset (void *dest, int fill, int count);
-void Q_memcpy (void *dest, void *src, int count);
-int Q_memcmp (void *m1, void *m2, int count);
-void Q_strcpy (char *dest, char *src);
-void Q_strncpy (char *dest, char *src, int count);
-int Q_strlen (char *str);
-char *Q_strrchr (char *s, char c);
-void Q_strcat (char *dest, char *src);
-int Q_strcmp (char *s1, char *s2);
-int Q_strncmp (char *s1, char *s2, int count);
-int Q_strcasecmp (char *s1, char *s2);
-int Q_strncasecmp (char *s1, char *s2, int n);
-int	Q_atoi (char *str);
-float Q_atof (char *str);
+void Q_memset (void *dest, byte fill, size_t count);
+void Q_memcpy (void *dest, const void *src, size_t count);
+int Q_memcmp (const void *m1, const void *m2, size_t count);
+void Q_strcpy (char *dest, const char *src);
+void Q_strncpy (char *dest, const char *src, size_t count);
+int Q_strlen (const char *str);
+const char *Q_strrchr (const char *s, char c);
+void Q_strcat (char *dest, const char *src);
+int Q_strcmp (const char *s1, const char *s2);
+int Q_strncmp (const char *s1, const char *s2, size_t count);
+int Q_strcasecmp (const char *s1, const char *s2);
+int Q_strncasecmp (const char *s1, const char *s2, size_t count);
+int	Q_atoi (const char *str);
+float Q_atof (const char *str);
 
 //============================================================================
 
 extern	char		com_token[1024];
 extern	qboolean	com_eof;
 
-char *COM_Parse (char *data);
+const char *COM_Parse (const char *data);
 
 
 extern	int		com_argc;
-extern	char	**com_argv;
+extern	const char	**com_argv;
 
-int COM_CheckParm (char *parm);
-void COM_Init (char *path);
-void COM_InitArgv (int argc, char **argv);
+int COM_CheckParm (const char *parm);
+void COM_Init (const char *path);
+void COM_InitArgv (int argc, const char **argv);
 
-char *COM_SkipPath (char *pathname);
-void COM_StripExtension (char *in, char *out);
-void COM_FileBase (char *in, char *out);
-void COM_DefaultExtension (char *path, char *extension);
+const char *COM_SkipPath (const char *pathname);
+void COM_StripExtension (const char *in, char *out);
+void COM_FileBase (const char *in, char *out);
+void COM_DefaultExtension (char *path, const char *extension);
 
 char	*va(char *format, ...);
 // does a varargs printf into a temp buffer
@@ -167,15 +176,15 @@ struct cache_user_s;
 
 extern	char	com_gamedir[MAX_OSPATH];
 
-void COM_WriteFile (char *filename, void *data, int len);
-int COM_OpenFile (char *filename, int *hndl);
-int COM_FOpenFile (char *filename, FILE **file);
+void COM_WriteFile (const char *filename, const void *data, size_t len);
+int COM_OpenFile (const char *filename, int *hndl);
+int COM_FOpenFile (const char *filename, FILE **file);
 void COM_CloseFile (int h);
 
-byte *COM_LoadStackFile (char *path, void *buffer, int bufsize);
-byte *COM_LoadTempFile (char *path);
-byte *COM_LoadHunkFile (char *path);
-void COM_LoadCacheFile (char *path, struct cache_user_s *cu);
+byte *COM_LoadStackFile (const char *path, void *buffer, size_t bufsize);
+byte *COM_LoadTempFile (const char *path);
+byte *COM_LoadHunkFile (const char *path);
+void COM_LoadCacheFile (const char *path, struct cache_user_s *cu);
 
 
 extern	struct cvar_s	registered;

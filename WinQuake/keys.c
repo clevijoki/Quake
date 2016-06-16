@@ -158,8 +158,6 @@ Interactive line editing and console scrollback
 */
 void Key_Console (int key)
 {
-	char	*cmd;
-	
 	if (key == K_ENTER)
 	{
 		Cbuf_AddText (key_lines[edit_line]+1);	// skip the >
@@ -177,7 +175,7 @@ void Key_Console (int key)
 
 	if (key == K_TAB)
 	{	// command completion
-		cmd = Cmd_CompleteCommand (key_lines[edit_line]+1);
+		const char *cmd = Cmd_CompleteCommand (key_lines[edit_line]+1);
 		if (!cmd)
 			cmd = Cvar_CompleteVariable (key_lines[edit_line]+1);
 		if (cmd)
@@ -237,8 +235,8 @@ void Key_Console (int key)
 	if (key == K_PGUP || key==K_MWHEELUP)
 	{
 		con_backscroll += 2;
-		if (con_backscroll > con_totallines - (vid.height>>3) - 1)
-			con_backscroll = con_totallines - (vid.height>>3) - 1;
+		if (con_backscroll > con_totallines - (int)(vid.height>>3) - 1)
+			con_backscroll = con_totallines - (int)(vid.height>>3) - 1;
 		return;
 	}
 
@@ -338,7 +336,7 @@ the given string.  Single ascii characters return themselves, while
 the K_* names are matched up.
 ===================
 */
-int Key_StringToKeynum (char *str)
+int Key_StringToKeynum (const char *str)
 {
 	keyname_t	*kn;
 	
@@ -364,7 +362,7 @@ given keynum.
 FIXME: handle quote special (general escape sequence?)
 ===================
 */
-char *Key_KeynumToString (int keynum)
+const char *Key_KeynumToString (int keynum)
 {
 	keyname_t	*kn;	
 	static	char	tinystr[2];
@@ -391,7 +389,7 @@ char *Key_KeynumToString (int keynum)
 Key_SetBinding
 ===================
 */
-void Key_SetBinding (int keynum, char *binding)
+void Key_SetBinding (int keynum, const char *binding)
 {
 	char	*new;
 	int		l;

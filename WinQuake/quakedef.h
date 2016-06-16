@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -44,6 +45,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
+#include <stdint.h>
+#include <assert.h>
+
+#if defined(_DEBUG)
+#define QASSERT(x, msg) assert((x) && msg)
+#else
+#define QASSERT(x) do {} while(0)
+#endif
 
 #if defined(_WIN32) && !defined(WINDED)
 
@@ -273,9 +282,9 @@ typedef struct
 	char	*basedir;
 	char	*cachedir;		// for development over ISDN lines
 	int		argc;
-	char	**argv;
+	const char **argv;
 	void	*membase;
-	int		memsize;
+	size_t	memsize;
 } quakeparms_t;
 
 
@@ -333,3 +342,5 @@ extern	cvar_t	chase_active;
 void Chase_Init (void);
 void Chase_Reset (void);
 void Chase_Update (void);
+
+#define UNREFERENCED_PARAM(x) x = x;

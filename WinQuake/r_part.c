@@ -118,8 +118,8 @@ extern	float	r_avertexnormals[NUMVERTEXNORMALS][3];
 vec3_t	avelocities[NUMVERTEXNORMALS];
 float	beamlength = 16;
 vec3_t	avelocity = {23, 7, 3};
-float	partstep = 0.01;
-float	timescale = 0.01;
+float	partstep = 0.01f;
+float	timescale = 0.01f;
 
 void R_EntityParticles (entity_t *ent)
 {
@@ -660,13 +660,13 @@ void R_DrawParticles (void)
 	vec3_t			up, right;
 	float			scale;
 
-    GL_Bind(particletexture);
+    GL_Bind(r_particletexture);
 	glEnable (GL_BLEND);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glBegin (GL_TRIANGLES);
 
-	VectorScale (vup, 1.5, up);
-	VectorScale (vright, 1.5, right);
+	VectorScale (r_vup, 1.5, up);
+	VectorScale (r_vright, 1.5, right);
 #else
 	D_StartParticles ();
 
@@ -711,8 +711,8 @@ void R_DrawParticles (void)
 
 #ifdef GLQUAKE
 		// hack a scale up to keep particles from disapearing
-		scale = (p->org[0] - r_origin[0])*vpn[0] + (p->org[1] - r_origin[1])*vpn[1]
-			+ (p->org[2] - r_origin[2])*vpn[2];
+		scale = (p->org[0] - r_origin[0])*r_vpn[0] + (p->org[1] - r_origin[1])*r_vpn[1]
+			+ (p->org[2] - r_origin[2])*r_vpn[2];
 		if (scale < 20)
 			scale = 1;
 		else

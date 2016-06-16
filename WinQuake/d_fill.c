@@ -29,7 +29,7 @@ D_FillRect
 */
 void D_FillRect (vrect_t *rect, int color)
 {
-	int				rx, ry, rwidth, rheight;
+	uint32_t		rx, ry, rwidth, rheight;
 	unsigned char	*dest;
 	unsigned		*ldest;
 
@@ -58,7 +58,7 @@ void D_FillRect (vrect_t *rect, int color)
 
 	dest = ((byte *)vid.buffer + ry*vid.rowbytes + rx);
 
-	if (((rwidth & 0x03) == 0) && (((long)dest & 0x03) == 0))
+	if (((rwidth & 0x03) == 0) && (((uintptr_t)dest & 0x03) == 0))
 	{
 	// faster aligned dword clear
 		ldest = (unsigned *)dest;

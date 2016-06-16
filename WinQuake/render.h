@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -108,7 +109,7 @@ extern	int		reinit_surfcache;
 
 
 extern	refdef_t	r_refdef;
-extern vec3_t	r_origin, vpn, vright, vup;
+extern vec3_t	r_origin, r_vpn, r_vright, r_vup;
 
 extern	struct texture_s	*r_notexture_mip;
 
@@ -125,7 +126,7 @@ void R_AddEfrags (entity_t *ent);
 void R_RemoveEfrags (entity_t *ent);
 
 void R_NewMap (void);
-
+void R_StoreEfrags (efrag_t **ppefrag);
 
 void R_ParseParticleEffect (void);
 void R_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count);

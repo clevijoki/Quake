@@ -65,11 +65,10 @@ Dumps the current net message, prefixed by the length and view angles
 */
 void CL_WriteDemoMessage (void)
 {
-	int		len;
 	int		i;
 	float	f;
 
-	len = LittleLong (net_message.cursize);
+	uint32_t len = LittleULong (net_message.cursize);
 	fwrite (&len, 4, 1, cls.demofile);
 	for (i=0 ; i<3 ; i++)
 	{
@@ -87,9 +86,10 @@ CL_GetMessage
 Handles recording and playback of demos, on top of NET_ code
 ====================
 */
-int CL_GetMessage (void)
+size_t CL_GetMessage (void)
 {
-	int		r, i;
+	size_t	r;
+	int		i;
 	float	f;
 	
 	if	(cls.demoplayback)
@@ -122,7 +122,7 @@ int CL_GetMessage (void)
 			cl.mviewangles[0][i] = LittleFloat (f);
 		}
 		
-		net_message.cursize = LittleLong (net_message.cursize);
+		net_message.cursize = LittleULong (net_message.cursize);
 		if (net_message.cursize > MAX_MSGLEN)
 			Sys_Error ("Demo message > MAX_MSGLEN");
 		r = fread (net_message.data, net_message.cursize, 1, cls.demofile);

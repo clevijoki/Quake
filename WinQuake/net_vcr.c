@@ -67,6 +67,7 @@ void VCR_ReadNext (void)
 
 void VCR_Listen (qboolean state)
 {
+	UNREFERENCED_PARAMETER(state);
 }
 
 
@@ -100,6 +101,7 @@ int VCR_GetMessage (qsocket_t *sock)
 
 int VCR_SendMessage (qsocket_t *sock, sizebuf_t *data)
 {
+	UNREFERENCED_PARAMETER(data);
 	int	ret;
 
 	if (host_time != next.time || next.op != VCR_OP_SENDMESSAGE || next.session != *(long *)(&sock->driverdata))
@@ -130,16 +132,19 @@ qboolean VCR_CanSendMessage (qsocket_t *sock)
 
 void VCR_Close (qsocket_t *sock)
 {
+	UNREFERENCED_PARAMETER(sock);
 }
 
 
 void VCR_SearchForHosts (qboolean xmit)
 {
+	UNREFERENCED_PARAMETER(xmit);
 }
 
 
 qsocket_t *VCR_Connect (char *host)
 {
+	UNREFERENCED_PARAMETER(host);
 	return NULL;
 }
 

@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -111,7 +112,7 @@ extern	surf_t	*surfaces, *surface_p, *surf_max;
 extern vec3_t	sxformaxis[4];	// s axis transformed into viewspace
 extern vec3_t	txformaxis[4];	// t axis transformed into viewspac
 
-extern vec3_t	modelorg, base_modelorg;
+extern vec3_t	r_modelorg, base_modelorg;
 
 extern	float	xcenter, ycenter;
 extern	float	xscale, yscale;

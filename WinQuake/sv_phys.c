@@ -98,12 +98,12 @@ void SV_CheckVelocity (edict_t *ent)
 	{
 		if (IS_NAN(ent->v.velocity[i]))
 		{
-			Con_Printf ("Got a NaN velocity on %s\n", pr_strings + ent->v.classname);
+			Con_Printf ("Got a NaN velocity on %s\n", PR_GetString(ent->v.classname));
 			ent->v.velocity[i] = 0;
 		}
 		if (IS_NAN(ent->v.origin[i]))
 		{
-			Con_Printf ("Got a NaN origin on %s\n", pr_strings + ent->v.classname);
+			Con_Printf ("Got a NaN origin on %s\n", PR_GetString(ent->v.classname));
 			ent->v.origin[i] = 0;
 		}
 		if (ent->v.velocity[i] > sv_maxvelocity.value)
@@ -930,7 +930,7 @@ int SV_TryUnstick (edict_t *ent, vec3_t oldvel)
 		ent->v.velocity[0] = oldvel[0];
 		ent->v. velocity[1] = oldvel[1];
 		ent->v. velocity[2] = 0;
-		clip = SV_FlyMove (ent, 0.1, &steptrace);
+		clip = SV_FlyMove (ent, 0.1f, &steptrace);
 
 		if ( fabs(oldorg[1] - ent->v.origin[1]) > 4
 		|| fabs(oldorg[0] - ent->v.origin[0]) > 4 )

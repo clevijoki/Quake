@@ -68,8 +68,8 @@ int 		desired_bits = 16;
 
 int sound_started=0;
 
-cvar_t bgmvolume = {"bgmvolume", "1", true};
-cvar_t volume = {"volume", "0.7", true};
+cvar_t snd_bgmvolume = {"bgmvolume", "1", true};
+cvar_t snd_volume = {"volume", "0.7", true};
 
 cvar_t nosound = {"nosound", "0"};
 cvar_t precache = {"precache", "1"};
@@ -182,10 +182,10 @@ void S_Init (void)
 	Cmd_AddCommand("soundinfo", S_SoundInfo_f);
 
 	Cvar_RegisterVariable(&nosound);
-	Cvar_RegisterVariable(&volume);
+	Cvar_RegisterVariable(&snd_volume);
 	Cvar_RegisterVariable(&precache);
 	Cvar_RegisterVariable(&loadas8bit);
-	Cvar_RegisterVariable(&bgmvolume);
+	Cvar_RegisterVariable(&snd_bgmvolume);
 	Cvar_RegisterVariable(&bgmbuffer);
 	Cvar_RegisterVariable(&ambient_level);
 	Cvar_RegisterVariable(&ambient_fade);
@@ -398,7 +398,7 @@ SND_Spatialize
 void SND_Spatialize(channel_t *ch)
 {
     vec_t dot;
-    vec_t ldist, rdist, dist;
+    vec_t dist;
     vec_t lscale, rscale, scale;
     vec3_t source_vec;
 	sfx_t *snd;
@@ -843,10 +843,7 @@ void GetSoundtime(void)
 
 void S_ExtraUpdate (void)
 {
-
-#ifdef _WIN32
 	IN_Accumulate ();
-#endif
 
 	if (snd_noextraupdate.value)
 		return;		// don't pollute timings
@@ -874,8 +871,8 @@ void S_Update_(void)
 // mix ahead of current position
 	endtime = soundtime + _snd_mixahead.value * shm->speed;
 	samps = shm->samples >> (shm->channels-1);
-	if (endtime - soundtime > samps)
-		endtime = soundtime + samps;
+	if (endtime - soundtime > (unsigned int)samps)
+		endtime = (unsigned int)(soundtime + samps);
 
 #ifdef _WIN32
 // if the buffer was lost or stopped, restore it and/or restart it
@@ -912,7 +909,7 @@ console functions
 void S_Play(void)
 {
 	static int hash=345;
-	int 	i;
+	uint32_t	i;
 	char name[256];
 	sfx_t	*sfx;
 	
@@ -935,7 +932,7 @@ void S_Play(void)
 void S_PlayVol(void)
 {
 	static int hash=543;
-	int i;
+	uint32_t i;
 	float vol;
 	char name[256];
 	sfx_t	*sfx;

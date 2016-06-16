@@ -83,7 +83,7 @@ Cbuf_AddText
 Adds command text at the end of the buffer
 ============
 */
-void Cbuf_AddText (char *text)
+void Cbuf_AddText (const char *text)
 {
 	int		l;
 	
@@ -108,7 +108,7 @@ Adds a \n to the text
 FIXME: actually change the command buffer to do less copying
 ============
 */
-void Cbuf_InsertText (char *text)
+void Cbuf_InsertText (const char *text)
 {
 	char	*temp;
 	int		templen;
@@ -142,7 +142,7 @@ Cbuf_Execute
 */
 void Cbuf_Execute (void)
 {
-	int		i;
+	uint32_t i;
 	char	*text;
 	char	line[1024];
 	int		quotes;
@@ -282,8 +282,7 @@ Cmd_Exec_f
 */
 void Cmd_Exec_f (void)
 {
-	char	*f;
-	int		mark;
+	byte	*f;
 
 	if (Cmd_Argc () != 2)
 	{
@@ -291,8 +290,9 @@ void Cmd_Exec_f (void)
 		return;
 	}
 
-	mark = Hunk_LowMark ();
-	f = (char *)COM_LoadHunkFile (Cmd_Argv(1));
+	uintptr_t mark = Hunk_LowMark ();
+	int32_t string_mark = PR_HunkStringsMark();
+	f = COM_LoadHunkFile (Cmd_Argv(1));
 	if (!f)
 	{
 		Con_Printf ("couldn't exec %s\n",Cmd_Argv(1));
@@ -300,8 +300,9 @@ void Cmd_Exec_f (void)
 	}
 	Con_Printf ("execing %s\n",Cmd_Argv(1));
 	
-	Cbuf_InsertText (f);
+	Cbuf_InsertText ((char*)f);
 	Hunk_FreeToLowMark (mark);
+	PR_FreeHunkStringsToMark(string_mark);
 }
 
 
@@ -314,7 +315,7 @@ Just prints the rest of the line to the console
 */
 void Cmd_Echo_f (void)
 {
-	int		i;
+	uint32_t i;
 	
 	for (i=1 ; i<Cmd_Argc() ; i++)
 		Con_Printf ("%s ",Cmd_Argv(i));
@@ -343,7 +344,6 @@ void Cmd_Alias_f (void)
 	cmdalias_t	*a;
 	char		cmd[1024];
 	int			i, c;
-	char		*s;
 
 	if (Cmd_Argc() == 1)
 	{
@@ -353,7 +353,7 @@ void Cmd_Alias_f (void)
 		return;
 	}
 
-	s = Cmd_Argv(1);
+	const char *s = Cmd_Argv(1);
 	if (strlen(s) >= MAX_ALIAS_NAME)
 	{
 		Con_Printf ("Alias name is too long\n");
@@ -403,17 +403,17 @@ void Cmd_Alias_f (void)
 typedef struct cmd_function_s
 {
 	struct cmd_function_s	*next;
-	char					*name;
+	const char				*name;
 	xcommand_t				function;
 } cmd_function_t;
 
 
 #define	MAX_ARGS		80
 
-static	int			cmd_argc;
+static	uint32_t	cmd_argc;
 static	char		*cmd_argv[MAX_ARGS];
-static	char		*cmd_null_string = "";
-static	char		*cmd_args = NULL;
+static	const char	*cmd_null_string = "";
+static	const char	*cmd_args = NULL;
 
 cmd_source_t	cmd_source;
 
@@ -443,7 +443,7 @@ void Cmd_Init (void)
 Cmd_Argc
 ============
 */
-int		Cmd_Argc (void)
+uint32_t Cmd_Argc (void)
 {
 	return cmd_argc;
 }
@@ -453,9 +453,9 @@ int		Cmd_Argc (void)
 Cmd_Argv
 ============
 */
-char	*Cmd_Argv (int arg)
+const char *Cmd_Argv (uint32_t arg)
 {
-	if ( (unsigned)arg >= cmd_argc )
+	if ( arg >= cmd_argc )
 		return cmd_null_string;
 	return cmd_argv[arg];	
 }
@@ -465,7 +465,7 @@ char	*Cmd_Argv (int arg)
 Cmd_Args
 ============
 */
-char		*Cmd_Args (void)
+const char *Cmd_Args (void)
 {
 	return cmd_args;
 }
@@ -478,9 +478,9 @@ Cmd_TokenizeString
 Parses the given string into command line tokens.
 ============
 */
-void Cmd_TokenizeString (char *text)
+void Cmd_TokenizeString (const char *text)
 {
-	int		i;
+	uint32_t	i;
 	
 // clear the args from the last string
 	for (i=0 ; i<cmd_argc ; i++)
@@ -529,7 +529,7 @@ void Cmd_TokenizeString (char *text)
 Cmd_AddCommand
 ============
 */
-void	Cmd_AddCommand (char *cmd_name, xcommand_t function)
+void	Cmd_AddCommand (const char *cmd_name, xcommand_t function)
 {
 	cmd_function_t	*cmd;
 	
@@ -565,7 +565,7 @@ void	Cmd_AddCommand (char *cmd_name, xcommand_t function)
 Cmd_Exists
 ============
 */
-qboolean	Cmd_Exists (char *cmd_name)
+qboolean	Cmd_Exists (const char *cmd_name)
 {
 	cmd_function_t	*cmd;
 
@@ -585,7 +585,7 @@ qboolean	Cmd_Exists (char *cmd_name)
 Cmd_CompleteCommand
 ============
 */
-char *Cmd_CompleteCommand (char *partial)
+const char *Cmd_CompleteCommand (const char *partial)
 {
 	cmd_function_t	*cmd;
 	int				len;
@@ -611,7 +611,7 @@ A complete command line has been parsed, so try to execute it
 FIXME: lookupnoadd the token to speed search?
 ============
 */
-void	Cmd_ExecuteString (char *text, cmd_source_t src)
+void	Cmd_ExecuteString (const char *text, cmd_source_t src)
 {	
 	cmd_function_t	*cmd;
 	cmdalias_t		*a;
@@ -690,9 +690,9 @@ where the given parameter apears, or 0 if not present
 ================
 */
 
-int Cmd_CheckParm (char *parm)
+int Cmd_CheckParm (const char *parm)
 {
-	int i;
+	uint32_t i;
 	
 	if (!parm)
 		Sys_Error ("Cmd_CheckParm: NULL");

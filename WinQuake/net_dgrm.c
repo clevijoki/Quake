@@ -282,6 +282,7 @@ qboolean Datagram_CanSendMessage (qsocket_t *sock)
 
 qboolean Datagram_CanSendUnreliableMessage (qsocket_t *sock)
 {
+	sock = sock;
 	return true;
 }
 
@@ -477,10 +478,10 @@ void NET_Stats_f (void)
 
 	if (Cmd_Argc () == 1)
 	{
-		Con_Printf("unreliable messages sent   = %i\n", unreliableMessagesSent);
-		Con_Printf("unreliable messages recv   = %i\n", unreliableMessagesReceived);
-		Con_Printf("reliable messages sent     = %i\n", messagesSent);
-		Con_Printf("reliable messages received = %i\n", messagesReceived);
+		Con_Printf("unreliable messages sent   = %i\n", net_unreliableMessagesSent);
+		Con_Printf("unreliable messages recv   = %i\n", net_unreliableMessagesReceived);
+		Con_Printf("reliable messages sent     = %i\n", net_messagesSent);
+		Con_Printf("reliable messages received = %i\n", net_messagesReceived);
 		Con_Printf("packetsSent                = %i\n", packetsSent);
 		Con_Printf("packetsReSent              = %i\n", packetsReSent);
 		Con_Printf("packetsReceived            = %i\n", packetsReceived);
@@ -578,7 +579,6 @@ static void Test_Poll(void)
 
 static void Test_f (void)
 {
-	char	*host;
 	int		n;
 	int		max = MAX_SCOREBOARD;
 	struct qsockaddr sendaddr;
@@ -586,7 +586,7 @@ static void Test_f (void)
 	if (testInProgress)
 		return;
 
-	host = Cmd_Argv (1);
+	const char *host = Cmd_Argv (1);
 
 	if (host && hostCacheCount)
 	{
@@ -707,14 +707,13 @@ Done:
 
 static void Test2_f (void)
 {
-	char	*host;
 	int		n;
 	struct qsockaddr sendaddr;
 
 	if (test2InProgress)
 		return;
 
-	host = Cmd_Argv (1);
+	const char *host = Cmd_Argv (1);
 
 	if (host && hostCacheCount)
 	{
@@ -873,7 +872,7 @@ static qsocket_t *_Datagram_CheckNewConnections (void)
 		MSG_WriteByte(&net_message, CCREP_SERVER_INFO);
 		dfunc.GetSocketAddr(acceptsock, &newaddr);
 		MSG_WriteString(&net_message, dfunc.AddrToString(&newaddr));
-		MSG_WriteString(&net_message, hostname.string);
+		MSG_WriteString(&net_message, net_hostname.string);
 		MSG_WriteString(&net_message, sv.name);
 		MSG_WriteByte(&net_message, net_activeconnections);
 		MSG_WriteByte(&net_message, svs.maxclients);

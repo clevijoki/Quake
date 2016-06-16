@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -21,7 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // this file is shared by quake and qcc
 
 typedef int	func_t;
-typedef int	string_t;
+#if !defined STRING_T_DEFINED
+typedef struct string_s { int32_t value; } string_t;
+#define STRING_T_DEFINED
+#endif
 
 typedef enum {ev_void, ev_string, ev_float, ev_vector, ev_entity, ev_field, ev_function, ev_pointer} etype_t;
 
@@ -129,7 +133,7 @@ typedef struct
 	unsigned short	type;		// if DEF_SAVEGLOBGAL bit is set
 								// the variable needs to be saved in savegames
 	unsigned short	ofs;
-	int			s_name;
+	string_t		s_name;
 } ddef_t;
 #define	DEF_SAVEGLOBAL	(1<<15)
 
@@ -143,8 +147,8 @@ typedef struct
 	
 	int		profile;		// runtime
 	
-	int		s_name;
-	int		s_file;			// source file defined in
+	string_t s_name;
+	string_t s_file;			// source file defined in
 	
 	int		numparms;
 	byte	parm_size[MAX_PARMS];

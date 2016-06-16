@@ -274,6 +274,7 @@ Debugging tool, just flashes the screen
 */
 void SetPal (int i)
 {
+	i = i;
 #if 0
 	static int old;
 	byte	pal[768];
@@ -403,7 +404,7 @@ float	CL_LerpPoint (void)
 	if (f > 0.1)
 	{	// dropped packet, or start of demo
 		cl.mtime[1] = cl.mtime[0] - 0.1;
-		f = 0.1;
+		f = 0.1f;
 	}
 	frac = (cl.time - cl.mtime[1]) / f;
 //Con_Printf ("frac: %f\n",frac);
@@ -631,9 +632,9 @@ CL_ReadFromServer
 Read all incoming data from the server
 ===============
 */
-int CL_ReadFromServer (void)
+size_t CL_ReadFromServer (void)
 {
-	int		ret;
+	size_t		ret;
 
 	cl.oldtime = cl.time;
 	cl.time += host_frametime;

@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -28,15 +29,13 @@ extern qboolean con_initialized;
 extern byte *con_chars;
 extern	int	con_notifylines;		// scan lines to clear for notify lines
 
-void Con_DrawCharacter (int cx, int line, int num);
-
 void Con_CheckResize (void);
 void Con_Init (void);
 void Con_DrawConsole (int lines, qboolean drawinput);
-void Con_Print (char *txt);
-void Con_Printf (char *fmt, ...);
-void Con_DPrintf (char *fmt, ...);
-void Con_SafePrintf (char *fmt, ...);
+void Con_Print (const char *txt);
+void Con_Printf (const char *fmt, ...);
+void Con_DPrintf (const char *fmt, ...);
+void Con_SafePrintf (const char *fmt, ...);
 void Con_Clear_f (void);
 void Con_DrawNotify (void);
 void Con_ClearNotify (void);

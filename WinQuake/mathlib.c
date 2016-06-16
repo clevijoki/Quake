@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <math.h>
 #include "quakedef.h"
 
-void Sys_Error (char *error, ...);
+void Sys_Error (const char *error, ...);
 
 vec3_t vec3_origin = {0,0,0};
 int nanmask = 255<<23;
@@ -503,7 +503,7 @@ void FloorDivMod (double numer, double denom, int *quotient,
 	int		q, r;
 	double	x;
 
-#ifndef PARANOID
+#ifdef PARANOID
 	if (denom <= 0.0)
 		Sys_Error ("FloorDivMod: bad denominator %d\n", denom);
 

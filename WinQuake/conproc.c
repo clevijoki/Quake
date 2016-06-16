@@ -23,12 +23,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "conproc.h"
 #include "quakedef.h"
 
-HANDLE	heventDone;
-HANDLE	hfileBuffer;
-HANDLE	heventChildSend;
-HANDLE	heventParentSend;
-HANDLE	hStdout;
-HANDLE	hStdin;
+struct conproc_t
+{
+	HANDLE	heventDone;
+	HANDLE	hfileBuffer;
+	HANDLE	heventChildSend;
+	HANDLE	heventParentSend;
+	HANDLE	hStdout;
+	HANDLE	hStdin;
+}cp;
 
 DWORD RequestProc (DWORD dwNichts);
 LPVOID GetMappedBuffer (HANDLE hfileBuffer);
@@ -44,21 +47,19 @@ BOOL SetConsoleCXCY(HANDLE hStdout, int cx, int cy);
 void InitConProc (HANDLE hFile, HANDLE heventParent, HANDLE heventChild)
 {
 	DWORD	dwID;
-	CONSOLE_SCREEN_BUFFER_INFO	info;
-	int		wheight, wwidth;
 
 // ignore if we don't have all the events.
 	if (!hFile || !heventParent || !heventChild)
 		return;
 
-	hfileBuffer = hFile;
-	heventParentSend = heventParent;
-	heventChildSend = heventChild;
+	cp.hfileBuffer = hFile;
+	cp.heventParentSend = heventParent;
+	cp.heventChildSend = heventChild;
 
 // so we'll know when to go away.
-	heventDone = CreateEvent (NULL, FALSE, FALSE, NULL);
+	cp.heventDone = CreateEvent (NULL, FALSE, FALSE, NULL);
 
-	if (!heventDone)
+	if (!cp.heventDone)
 	{
 		Con_SafePrintf ("Couldn't create heventDone\n");
 		return;
@@ -71,36 +72,37 @@ void InitConProc (HANDLE hFile, HANDLE heventParent, HANDLE heventChild)
 					   0,
 					   &dwID))
 	{
-		CloseHandle (heventDone);
+		CloseHandle (cp.heventDone);
 		Con_SafePrintf ("Couldn't create QHOST thread\n");
 		return;
 	}
 
 // save off the input/output handles.
-	hStdout = GetStdHandle (STD_OUTPUT_HANDLE);
-	hStdin = GetStdHandle (STD_INPUT_HANDLE);
+	cp.hStdout = GetStdHandle (STD_OUTPUT_HANDLE);
+	cp.hStdin = GetStdHandle (STD_INPUT_HANDLE);
 
 // force 80 character width, at least 25 character height
-	SetConsoleCXCY (hStdout, 80, 25);
+	SetConsoleCXCY (cp.hStdout, 80, 25);
 }
 
 
 void DeinitConProc (void)
 {
-	if (heventDone)
-		SetEvent (heventDone);
+	if (cp.heventDone)
+		SetEvent (cp.heventDone);
 }
 
 
 DWORD RequestProc (DWORD dwNichts)
 {
+	dwNichts = dwNichts;
 	int		*pBuffer;
 	DWORD	dwRet;
 	HANDLE	heventWait[2];
 	int		iBeginLine, iEndLine;
 	
-	heventWait[0] = heventParentSend;
-	heventWait[1] = heventDone;
+	heventWait[0] = cp.heventParentSend;
+	heventWait[1] = cp.heventDone;
 
 	while (1)
 	{
@@ -110,7 +112,7 @@ DWORD RequestProc (DWORD dwNichts)
 		if (dwRet == WAIT_OBJECT_0 + 1)	
 			break;
 
-		pBuffer = (int *) GetMappedBuffer (hfileBuffer);
+		pBuffer = (int *) GetMappedBuffer (cp.hfileBuffer);
 		
 	// hfileBuffer is invalid.  Just leave.
 		if (!pBuffer)
@@ -147,7 +149,7 @@ DWORD RequestProc (DWORD dwNichts)
 		}
 
 		ReleaseMappedBuffer (pBuffer);
-		SetEvent (heventChildSend);
+		SetEvent (cp.heventChildSend);
 	}
 
 	return 0;
@@ -176,7 +178,7 @@ BOOL GetScreenBufferLines (int *piLines)
 	CONSOLE_SCREEN_BUFFER_INFO	info;							  
 	BOOL						bRet;
 
-	bRet = GetConsoleScreenBufferInfo (hStdout, &info);
+	bRet = GetConsoleScreenBufferInfo (cp.hStdout, &info);
 		
 	if (bRet)
 		*piLines = info.dwSize.Y;
@@ -188,7 +190,7 @@ BOOL GetScreenBufferLines (int *piLines)
 BOOL SetScreenBufferLines (int iLines)
 {
 
-	return SetConsoleCXCY (hStdout, 80, iLines);
+	return SetConsoleCXCY (cp.hStdout, 80, iLines);
 }
 
 
@@ -202,7 +204,7 @@ BOOL ReadText (LPTSTR pszText, int iBeginLine, int iEndLine)
 	coord.Y = iBeginLine;
 
 	bRet = ReadConsoleOutputCharacter(
-		hStdout,
+		cp.hStdout,
 		pszText,
 		80 * (iEndLine - iBeginLine + 1),
 		coord,
@@ -242,7 +244,7 @@ BOOL WriteText (LPCTSTR szText)
 		rec.Event.KeyEvent.dwControlKeyState = isupper(*sz) ? 0x80 : 0x0; 
 
 		WriteConsoleInput(
-			hStdin,
+			cp.hStdin,
 			&rec,
 			1,
 			&dwWritten);
@@ -250,7 +252,7 @@ BOOL WriteText (LPCTSTR szText)
 		rec.Event.KeyEvent.bKeyDown = FALSE;
 
 		WriteConsoleInput(
-			hStdin,
+			cp.hStdin,
 			&rec,
 			1,
 			&dwWritten);

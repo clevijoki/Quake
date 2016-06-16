@@ -31,7 +31,7 @@ qboolean	ipxAvailable = false;
 qboolean	tcpipAvailable = false;
 
 int			net_hostport;
-int			DEFAULTnet_hostport = 26000;
+int			net_DEFAULT_hostport = 26000;
 
 char		my_ipx_address[NET_NAMELEN];
 char		my_tcpip_address[NET_NAMELEN];
@@ -58,13 +58,13 @@ PollProcedure	slistPollProcedure = {NULL, 0.0, Slist_Poll};
 sizebuf_t		net_message;
 int				net_activeconnections = 0;
 
-int messagesSent = 0;
-int messagesReceived = 0;
-int unreliableMessagesSent = 0;
-int unreliableMessagesReceived = 0;
+int net_messagesSent = 0;
+int net_messagesReceived = 0;
+int net_unreliableMessagesSent = 0;
+int net_unreliableMessagesReceived = 0;
 
 cvar_t	net_messagetimeout = {"net_messagetimeout","300"};
-cvar_t	hostname = {"hostname", "UNNAMED"};
+cvar_t	net_hostname = {"hostname", "UNNAMED"};
 
 qboolean	configRestored = false;
 cvar_t	config_com_port = {"_config_com_port", "0x3f8", true};
@@ -247,7 +247,7 @@ static void NET_Port_f (void)
 		return;
 	}
 
-	DEFAULTnet_hostport = n;
+	net_DEFAULT_hostport = n;
 	net_hostport = n;
 
 	if (listening)
@@ -369,7 +369,7 @@ qsocket_t *NET_Connect (char *host)
 {
 	qsocket_t		*ret;
 	int				n;
-	int				numdrivers = net_numdrivers;
+	size_t			numdrivers = net_numdrivers;
 
 	SetNetTime();
 
@@ -451,7 +451,7 @@ struct
 {
 	double	time;
 	int		op;
-	long	session;
+	qsocket_t *session;
 } vcrConnect;
 
 qsocket_t *NET_CheckNewConnections (void)
@@ -473,7 +473,7 @@ qsocket_t *NET_CheckNewConnections (void)
 			{
 				vcrConnect.time = host_time;
 				vcrConnect.op = VCR_OP_CONNECT;
-				vcrConnect.session = (long)ret;
+				vcrConnect.session = ret;
 				Sys_FileWrite (vcrFile, &vcrConnect, sizeof(vcrConnect));
 				Sys_FileWrite (vcrFile, ret->address, NET_NAMELEN);
 			}
@@ -530,7 +530,7 @@ struct
 {
 	double	time;
 	int		op;
-	long	session;
+	qsocket_t *session;
 	int		ret;
 	int		len;
 } vcrGetMessage;
@@ -571,16 +571,16 @@ int	NET_GetMessage (qsocket_t *sock)
 		{
 			sock->lastMessageTime = net_time;
 			if (ret == 1)
-				messagesReceived++;
+				net_messagesReceived++;
 			else if (ret == 2)
-				unreliableMessagesReceived++;
+				net_unreliableMessagesReceived++;
 		}
 
 		if (recording)
 		{
 			vcrGetMessage.time = host_time;
 			vcrGetMessage.op = VCR_OP_GETMESSAGE;
-			vcrGetMessage.session = (long)sock;
+			vcrGetMessage.session = sock;
 			vcrGetMessage.ret = ret;
 			vcrGetMessage.len = net_message.cursize;
 			Sys_FileWrite (vcrFile, &vcrGetMessage, 24);
@@ -593,7 +593,7 @@ int	NET_GetMessage (qsocket_t *sock)
 		{
 			vcrGetMessage.time = host_time;
 			vcrGetMessage.op = VCR_OP_GETMESSAGE;
-			vcrGetMessage.session = (long)sock;
+			vcrGetMessage.session = sock;
 			vcrGetMessage.ret = ret;
 			Sys_FileWrite (vcrFile, &vcrGetMessage, 20);
 		}
@@ -618,7 +618,7 @@ struct
 {
 	double	time;
 	int		op;
-	long	session;
+	qsocket_t *session;
 	int		r;
 } vcrSendMessage;
 
@@ -638,13 +638,13 @@ int NET_SendMessage (qsocket_t *sock, sizebuf_t *data)
 	SetNetTime();
 	r = sfunc.QSendMessage(sock, data);
 	if (r == 1 && sock->driver)
-		messagesSent++;
+		net_messagesSent++;
 
 	if (recording)
 	{
 		vcrSendMessage.time = host_time;
 		vcrSendMessage.op = VCR_OP_SENDMESSAGE;
-		vcrSendMessage.session = (long)sock;
+		vcrSendMessage.session = sock;
 		vcrSendMessage.r = r;
 		Sys_FileWrite (vcrFile, &vcrSendMessage, 20);
 	}
@@ -669,13 +669,13 @@ int NET_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 	SetNetTime();
 	r = sfunc.SendUnreliableMessage(sock, data);
 	if (r == 1 && sock->driver)
-		unreliableMessagesSent++;
+		net_unreliableMessagesSent++;
 
 	if (recording)
 	{
 		vcrSendMessage.time = host_time;
 		vcrSendMessage.op = VCR_OP_SENDMESSAGE;
-		vcrSendMessage.session = (long)sock;
+		vcrSendMessage.session = sock;
 		vcrSendMessage.r = r;
 		Sys_FileWrite (vcrFile, &vcrSendMessage, 20);
 	}
@@ -710,7 +710,7 @@ qboolean NET_CanSendMessage (qsocket_t *sock)
 	{
 		vcrSendMessage.time = host_time;
 		vcrSendMessage.op = VCR_OP_CANSENDMESSAGE;
-		vcrSendMessage.session = (long)sock;
+		vcrSendMessage.session = sock;
 		vcrSendMessage.r = r;
 		Sys_FileWrite (vcrFile, &vcrSendMessage, 20);
 	}
@@ -825,11 +825,11 @@ void NET_Init (void)
 	if (i)
 	{
 		if (i < com_argc-1)
-			DEFAULTnet_hostport = Q_atoi (com_argv[i+1]);
+			net_DEFAULT_hostport = Q_atoi (com_argv[i+1]);
 		else
 			Sys_Error ("NET_Init: you must specify a number after -port");
 	}
-	net_hostport = DEFAULTnet_hostport;
+	net_hostport = net_DEFAULT_hostport;
 
 	if (COM_CheckParm("-listen") || cls.state == ca_dedicated)
 		listening = true;
@@ -851,7 +851,7 @@ void NET_Init (void)
 	SZ_Alloc (&net_message, NET_MAXMESSAGE);
 
 	Cvar_RegisterVariable (&net_messagetimeout);
-	Cvar_RegisterVariable (&hostname);
+	Cvar_RegisterVariable (&net_hostname);
 	Cvar_RegisterVariable (&config_com_port);
 	Cvar_RegisterVariable (&config_com_irq);
 	Cvar_RegisterVariable (&config_com_baud);

@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -18,8 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __MODEL__
-#define __MODEL__
 
 #include "modelgen.h"
 #include "spritegn.h"
@@ -372,11 +371,10 @@ typedef struct model_s
 
 void	Mod_Init (void);
 void	Mod_ClearAll (void);
-model_t *Mod_ForName (char *name, qboolean crash);
+model_t *Mod_ForName (const char *name, qboolean crash);
 void	*Mod_Extradata (model_t *mod);	// handles caching
-void	Mod_TouchModel (char *name);
+void	Mod_TouchModel (const char *name);
 
 mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
 byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 
-#endif	// __MODEL__

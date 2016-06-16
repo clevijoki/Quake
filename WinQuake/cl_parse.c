@@ -147,7 +147,7 @@ void CL_KeepaliveMessage (void)
 {
 	float	time;
 	static float lastmsg;
-	int		ret;
+	size_t		ret;
 	sizebuf_t	old;
 	byte		olddata[8192];
 	

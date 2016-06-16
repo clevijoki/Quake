@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -27,7 +28,7 @@ typedef byte pixel_t;
 
 typedef struct vrect_s
 {
-	int				x,y,width,height;
+	uint32_t x,y,width,height;
 	struct vrect_s	*pnext;
 } vrect_t;
 
@@ -36,19 +37,19 @@ typedef struct
 	pixel_t			*buffer;		// invisible buffer
 	pixel_t			*colormap;		// 256 * VID_GRADES size
 	unsigned short	*colormap16;	// 256 * VID_GRADES size
-	int				fullbright;		// index of first fullbright color
-	unsigned		rowbytes;	// may be > width if displayed in a window
-	unsigned		width;		
-	unsigned		height;
+	uint32_t		fullbright;		// index of first fullbright color
+	uint32_t		rowbytes;	// may be > width if displayed in a window
+	uint32_t		width;
+	uint32_t		height;
 	float			aspect;		// width / height -- < 0 is taller than wide
-	int				numpages;
-	int				recalc_refdef;	// if true, recalc vid-based stuff
+	int32_t			numpages;
+	int32_t			recalc_refdef;	// if true, recalc vid-based stuff
 	pixel_t			*conbuffer;
-	int				conrowbytes;
-	unsigned		conwidth;
-	unsigned		conheight;
-	int				maxwarpwidth;
-	int				maxwarpheight;
+	int32_t			conrowbytes;
+	uint32_t		conwidth;
+	uint32_t		conheight;
+	int32_t			maxwarpwidth;
+	int32_t			maxwarpheight;
 	pixel_t			*direct;		// direct drawing to framebuffer, if not
 									//  NULL
 } viddef_t;

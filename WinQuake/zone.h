@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -83,28 +84,28 @@ Zone block
 
 */
 
-void Memory_Init (void *buf, int size);
+void Memory_Init (void *buf, size_t size);
 
 void Z_Free (void *ptr);
-void *Z_Malloc (int size);			// returns 0 filled memory
-void *Z_TagMalloc (int size, int tag);
+void *Z_Malloc (size_t size);			// returns 0 filled memory
+void *Z_TagMalloc (size_t size, int tag);
 
 void Z_DumpHeap (void);
 void Z_CheckHeap (void);
 int Z_FreeMemory (void);
 
-void *Hunk_Alloc (int size);		// returns 0 filled memory
-void *Hunk_AllocName (int size, char *name);
+void *Hunk_Alloc (size_t size);		// returns 0 filled memory
+void *Hunk_AllocName (size_t size, const char *name);
 
-void *Hunk_HighAllocName (int size, char *name);
+void *Hunk_HighAllocName (size_t size, const char *name);
 
-int	Hunk_LowMark (void);
-void Hunk_FreeToLowMark (int mark);
+uintptr_t Hunk_LowMark (void);
+void Hunk_FreeToLowMark (uintptr_t mark);
 
-int	Hunk_HighMark (void);
-void Hunk_FreeToHighMark (int mark);
+uintptr_t Hunk_HighMark (void);
+void Hunk_FreeToHighMark (uintptr_t mark);
 
-void *Hunk_TempAlloc (int size);
+void *Hunk_TempAlloc (size_t size);
 
 void Hunk_Check (void);
 
@@ -121,7 +122,7 @@ void *Cache_Check (cache_user_t *c);
 
 void Cache_Free (cache_user_t *c);
 
-void *Cache_Alloc (cache_user_t *c, int size, char *name);
+void *Cache_Alloc (cache_user_t *c, size_t size, const char *name);
 // Returns NULL if all purgable data was tossed and there still
 // wasn't enough room.
 

@@ -41,19 +41,22 @@ void Loop_Shutdown (void)
 
 void Loop_Listen (qboolean state)
 {
+	UNREFERENCED_PARAMETER(state);
 }
 
 
 void Loop_SearchForHosts (qboolean xmit)
 {
+	UNREFERENCED_PARAMETER(xmit);
+
 	if (!sv.active)
 		return;
 
 	hostCacheCount = 1;
-	if (Q_strcmp(hostname.string, "UNNAMED") == 0)
+	if (Q_strcmp(net_hostname.string, "UNNAMED") == 0)
 		Q_strcpy(hostcache[0].name, "local");
 	else
-		Q_strcpy(hostcache[0].name, hostname.string);
+		Q_strcpy(hostcache[0].name, net_hostname.string);
 	Q_strcpy(hostcache[0].map, sv.name);
 	hostcache[0].users = net_activeconnections;
 	hostcache[0].maxusers = svs.maxclients;
@@ -227,6 +230,7 @@ qboolean Loop_CanSendMessage (qsocket_t *sock)
 
 qboolean Loop_CanSendUnreliableMessage (qsocket_t *sock)
 {
+	UNREFERENCED_PARAMETER(sock);
 	return true;
 }
 

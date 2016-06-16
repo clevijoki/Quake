@@ -44,18 +44,18 @@ void Snd_WriteLinearBlastStereo16 (void)
 	for (i=0 ; i<snd_linear_count ; i+=2)
 	{
 		val = (snd_p[i]*snd_vol)>>8;
-		if (val > 0x7fff)
-			snd_out[i] = 0x7fff;
-		else if (val < (short)0x8000)
-			snd_out[i] = (short)0x8000;
+		if (val > SHRT_MAX)
+			snd_out[i] = SHRT_MAX;
+		else if (val < SHRT_MIN)
+			snd_out[i] = SHRT_MIN;
 		else
 			snd_out[i] = val;
 
 		val = (snd_p[i+1]*snd_vol)>>8;
-		if (val > 0x7fff)
-			snd_out[i+1] = 0x7fff;
-		else if (val < (short)0x8000)
-			snd_out[i+1] = (short)0x8000;
+		if (val > SHRT_MAX)
+			snd_out[i+1] = SHRT_MAX;
+		else if (val < SHRT_MIN)
+			snd_out[i+1] = SHRT_MIN;
 		else
 			snd_out[i+1] = val;
 	}
@@ -69,12 +69,12 @@ void S_TransferStereo16 (int endtime)
 	DWORD	*pbuf;
 #ifdef _WIN32
 	int		reps;
-	DWORD	dwSize,dwSize2;
+	DWORD	dwSize = 0,dwSize2;
 	DWORD	*pbuf2;
 	HRESULT	hresult;
 #endif
 	
-	snd_vol = volume.value*256;
+	snd_vol = snd_volume.value*256;
 
 	snd_p = (int *) paintbuffer;
 	lpaintedtime = paintedtime;
@@ -144,11 +144,11 @@ void S_TransferPaintBuffer(int endtime)
 	int 	*p;
 	int 	step;
 	int		val;
-	int		snd_vol;
+	int		vol;
 	DWORD	*pbuf;
 #ifdef _WIN32
 	int		reps;
-	DWORD	dwSize,dwSize2;
+	DWORD	dwSize = 0,dwSize2 = 0;
 	DWORD	*pbuf2;
 	HRESULT	hresult;
 #endif
@@ -164,7 +164,7 @@ void S_TransferPaintBuffer(int endtime)
 	out_mask = shm->samples - 1; 
 	out_idx = paintedtime * shm->channels & out_mask;
 	step = 3 - shm->channels;
-	snd_vol = volume.value*256;
+	vol = snd_volume.value*256;
 
 #ifdef _WIN32
 	if (pDSBuf)
@@ -202,12 +202,12 @@ void S_TransferPaintBuffer(int endtime)
 		short *out = (short *) pbuf;
 		while (count--)
 		{
-			val = (*p * snd_vol) >> 8;
+			val = (*p * vol) >> 8;
 			p+= step;
-			if (val > 0x7fff)
-				val = 0x7fff;
-			else if (val < (short)0x8000)
-				val = (short)0x8000;
+			if (val > SHRT_MAX)
+				val = SHRT_MAX;
+			else if (val < SHRT_MIN)
+				val = SHRT_MIN;
 			out[out_idx] = val;
 			out_idx = (out_idx + 1) & out_mask;
 		}
@@ -217,12 +217,12 @@ void S_TransferPaintBuffer(int endtime)
 		unsigned char *out = (unsigned char *) pbuf;
 		while (count--)
 		{
-			val = (*p * snd_vol) >> 8;
+			val = (*p * vol) >> 8;
 			p+= step;
-			if (val > 0x7fff)
-				val = 0x7fff;
-			else if (val < (short)0x8000)
-				val = (short)0x8000;
+			if (val > SHRT_MAX)
+				val = SHRT_MAX;
+			else if (val < SHRT_MIN)
+				val = SHRT_MIN;
 			out[out_idx] = (val>>8) + 128;
 			out_idx = (out_idx + 1) & out_mask;
 		}
@@ -357,7 +357,7 @@ void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 		
 	lscale = snd_scaletable[ch->leftvol >> 3];
 	rscale = snd_scaletable[ch->rightvol >> 3];
-	sfx = (signed char *)sc->data + ch->pos;
+	sfx = sc->data + ch->pos;
 
 	for (i=0 ; i<count ; i++)
 	{

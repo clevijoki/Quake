@@ -43,7 +43,8 @@ double		realtime;				// without any filtering or bounding
 double		oldrealtime;			// last frame run
 int			host_framecount;
 
-int			host_hunklevel;
+uintptr_t	host_hunklevel = 0;
+int32_t		host_string_hunklevel = -1;
 
 int			minimum_memory;
 
@@ -446,7 +447,7 @@ void Host_ShutdownServer(qboolean crash)
 	while (count);
 
 // make sure all the clients know we're disconnecting
-	buf.data = message;
+	buf.data = (byte*)message;
 	buf.maxsize = 4;
 	buf.cursize = 0;
 	MSG_WriteByte(&buf, svc_disconnect);
@@ -481,6 +482,8 @@ void Host_ClearMemory (void)
 	Mod_ClearAll ();
 	if (host_hunklevel)
 		Hunk_FreeToLowMark (host_hunklevel);
+	if (host_string_hunklevel >= 0)
+		PR_FreeHunkStringsToMark(host_string_hunklevel);
 
 	cls.signon = 0;
 	memset (&sv, 0, sizeof(sv));
@@ -705,7 +708,7 @@ void _Host_Frame (float time)
 // update audio
 	if (cls.signon == SIGNONS)
 	{
-		S_Update (r_origin, vpn, vright, vup);
+		S_Update (r_origin, r_vpn, r_vright, r_vup);
 		CL_DecayLights ();
 	}
 	else
@@ -914,6 +917,7 @@ void Host_Init (quakeparms_t *parms)
 
 	Hunk_AllocName (0, "-HOST_HUNKLEVEL-");
 	host_hunklevel = Hunk_LowMark ();
+	host_string_hunklevel = PR_HunkStringsMark();
 
 	host_initialized = true;
 	

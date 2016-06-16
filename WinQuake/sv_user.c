@@ -29,8 +29,8 @@ extern	cvar_t	sv_stopspeed;
 
 static	vec3_t		forward, right, up;
 
-vec3_t	wishdir;
-float	wishspeed;
+vec3_t	sv_wishdir;
+float	sv_wishspeed;
 
 // world
 float	*angles;
@@ -39,7 +39,7 @@ float	*velocity;
 
 qboolean	onground;
 
-usercmd_t	cmd;
+usercmd_t	sv_cmd;
 
 cvar_t	sv_idealpitchscale = {"sv_idealpitchscale","0.8"};
 
@@ -192,16 +192,16 @@ void SV_Accelerate (void)
 	int			i;
 	float		addspeed, accelspeed, currentspeed;
 
-	currentspeed = DotProduct (velocity, wishdir);
-	addspeed = wishspeed - currentspeed;
+	currentspeed = DotProduct (velocity, sv_wishdir);
+	addspeed = sv_wishspeed - currentspeed;
 	if (addspeed <= 0)
 		return;
-	accelspeed = sv_accelerate.value*host_frametime*wishspeed;
+	accelspeed = sv_accelerate.value*host_frametime*sv_wishspeed;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 	
 	for (i=0 ; i<3 ; i++)
-		velocity[i] += accelspeed*wishdir[i];	
+		velocity[i] += accelspeed*sv_wishdir[i];
 }
 
 void SV_AirAccelerate (vec3_t wishveloc)
@@ -217,7 +217,7 @@ void SV_AirAccelerate (vec3_t wishveloc)
 	if (addspeed <= 0)
 		return;
 //	accelspeed = sv_accelerate.value * host_frametime;
-	accelspeed = sv_accelerate.value*wishspeed * host_frametime;
+	accelspeed = sv_accelerate.value*sv_wishspeed * host_frametime;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 	
@@ -256,12 +256,12 @@ void SV_WaterMove (void)
 	AngleVectors (sv_player->v.v_angle, forward, right, up);
 
 	for (i=0 ; i<3 ; i++)
-		wishvel[i] = forward[i]*cmd.forwardmove + right[i]*cmd.sidemove;
+		wishvel[i] = forward[i]*sv_cmd.forwardmove + right[i]* sv_cmd.sidemove;
 
-	if (!cmd.forwardmove && !cmd.sidemove && !cmd.upmove)
+	if (!sv_cmd.forwardmove && !sv_cmd.sidemove && !sv_cmd.upmove)
 		wishvel[2] -= 60;		// drift towards bottom
 	else
-		wishvel[2] += cmd.upmove;
+		wishvel[2] += sv_cmd.upmove;
 
 	wishspeed = Length(wishvel);
 	if (wishspeed > sv_maxspeed.value)
@@ -269,7 +269,7 @@ void SV_WaterMove (void)
 		VectorScale (wishvel, sv_maxspeed.value/wishspeed, wishvel);
 		wishspeed = sv_maxspeed.value;
 	}
-	wishspeed *= 0.7;
+	wishspeed *= 0.7f;
 
 //
 // water friction
@@ -331,8 +331,8 @@ void SV_AirMove (void)
 
 	AngleVectors (sv_player->v.angles, forward, right, up);
 
-	fmove = cmd.forwardmove;
-	smove = cmd.sidemove;
+	fmove = sv_cmd.forwardmove;
+	smove = sv_cmd.sidemove;
 	
 // hack to not let you back into teleporter
 	if (sv.time < sv_player->v.teleport_time && fmove < 0)
@@ -342,16 +342,16 @@ void SV_AirMove (void)
 		wishvel[i] = forward[i]*fmove + right[i]*smove;
 
 	if ( (int)sv_player->v.movetype != MOVETYPE_WALK)
-		wishvel[2] = cmd.upmove;
+		wishvel[2] = sv_cmd.upmove;
 	else
 		wishvel[2] = 0;
 
-	VectorCopy (wishvel, wishdir);
-	wishspeed = VectorNormalize(wishdir);
-	if (wishspeed > sv_maxspeed.value)
+	VectorCopy (wishvel, sv_wishdir);
+	sv_wishspeed = VectorNormalize(sv_wishdir);
+	if (sv_wishspeed > sv_maxspeed.value)
 	{
-		VectorScale (wishvel, sv_maxspeed.value/wishspeed, wishvel);
-		wishspeed = sv_maxspeed.value;
+		VectorScale (wishvel, sv_maxspeed.value/ sv_wishspeed, wishvel);
+		sv_wishspeed = sv_maxspeed.value;
 	}
 	
 	if ( sv_player->v.movetype == MOVETYPE_NOCLIP)
@@ -400,7 +400,7 @@ void SV_ClientThink (void)
 //
 // angles
 // show 1/3 the pitch angle and all the roll angle
-	cmd = host_client->cmd;
+	sv_cmd = host_client->cmd;
 	angles = sv_player->v.angles;
 	
 	VectorAdd (sv_player->v.v_angle, sv_player->v.punchangle, v_angle);

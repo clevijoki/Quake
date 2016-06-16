@@ -255,7 +255,6 @@ command from the console.  Active clients are kicked off.
 */
 void Host_Map_f (void)
 {
-	int		i;
 	char	name[MAX_QPATH];
 
 	if (cmd_source != src_command)
@@ -270,7 +269,7 @@ void Host_Map_f (void)
 	SCR_BeginLoadingPlaque ();
 
 	cls.mapstring[0] = 0;
-	for (i=0 ; i<Cmd_Argc() ; i++)
+	for (uint32_t i=0 ; i<Cmd_Argc() ; i++)
 	{
 		strcat (cls.mapstring, Cmd_Argv(i));
 		strcat (cls.mapstring, " ");
@@ -291,7 +290,7 @@ void Host_Map_f (void)
 	{
 		strcpy (cls.spawnparms, "");
 
-		for (i=2 ; i<Cmd_Argc() ; i++)
+		for (uint32_t i=2 ; i<Cmd_Argc() ; i++)
 		{
 			strcat (cls.spawnparms, Cmd_Argv(i));
 			strcat (cls.spawnparms, " ");
@@ -564,7 +563,8 @@ void Host_Loadgame_f (void)
 	FILE	*f;
 	char	mapname[MAX_QPATH];
 	float	time, tfloat;
-	char	str[32768], *start;
+	char	str[32768];
+	const char *start;
 	int		i, r;
 	edict_t	*ent;
 	int		entnum;
@@ -641,8 +641,9 @@ void Host_Loadgame_f (void)
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
 		fscanf (f, "%s\n", str);
-		sv.lightstyles[i] = Hunk_Alloc (strlen(str)+1);
-		strcpy (sv.lightstyles[i], str);
+		char *new_str = Hunk_Alloc (strlen(str)+1);
+		strcpy(new_str, str);
+		sv.lightstyles[i] = new_str;
 	}
 
 // load the edicts out of the savegame file
@@ -909,17 +910,21 @@ Host_Name_f
 */
 void Host_Name_f (void)
 {
-	char	*newName;
+	char	newName[16];
 
 	if (Cmd_Argc () == 1)
 	{
 		Con_Printf ("\"name\" is \"%s\"\n", cl_name.string);
 		return;
 	}
-	if (Cmd_Argc () == 2)
-		newName = Cmd_Argv(1);	
+	if (Cmd_Argc() == 2)
+	{
+		Q_strncpy(newName, Cmd_Argv(1), sizeof(newName) - 1);
+	}
 	else
-		newName = Cmd_Args();
+	{
+		Q_strncpy(newName, Cmd_Args(), sizeof(newName) - 1);
+	}
 	newName[15] = 0;
 
 	if (cmd_source == src_command)
@@ -936,7 +941,7 @@ void Host_Name_f (void)
 		if (Q_strcmp(host_client->name, newName) != 0)
 			Con_Printf ("%s renamed to %s\n", host_client->name, newName);
 	Q_strcpy (host_client->name, newName);
-	host_client->edict->v.netname = host_client->name - pr_strings;
+	PR_SetString(&host_client->edict->v.netname, host_client->name);
 	
 // send notification to all clients
 	
@@ -1009,9 +1014,7 @@ void Host_Say(qboolean teamonly)
 {
 	client_t *client;
 	client_t *save;
-	int		j;
-	char	*p;
-	unsigned char	text[64];
+	char	text[64];
 	qboolean	fromServer = false;
 
 	if (cmd_source == src_command)
@@ -1033,26 +1036,29 @@ void Host_Say(qboolean teamonly)
 
 	save = host_client;
 
-	p = Cmd_Args();
+	const char *p = Cmd_Args();
+	size_t p_len = Q_strlen(p);
 // remove quotes if present
 	if (*p == '"')
 	{
 		p++;
-		p[Q_strlen(p)-1] = 0;
+		p_len-=2;
 	}
 
 // turn on color set 1
 	if (!fromServer)
 		sprintf (text, "%c%s: ", 1, save->name);
 	else
-		sprintf (text, "%c<%s> ", 1, hostname.string);
+		sprintf (text, "%c<%s> ", 1, net_hostname.string);
 
-	j = sizeof(text) - 2 - Q_strlen(text);  // -2 for /n and null terminator
-	if (Q_strlen(p) > j)
-		p[j] = 0;
+	size_t text_len = Q_strlen(text);
+	size_t j = sizeof(text) - 2 - text_len;  // -2 for /n and null terminator
+	if (p_len > j)
+		p_len = j;
 
-	strcat (text, p);
-	strcat (text, "\n");
+	memcpy (text + text_len, p, p_len);
+	text[text_len + p_len] = '\n';
+	text[text_len + p_len + 1] = 0;
 
 	for (j = 0, client = svs.clients; j < svs.maxclients; j++, client++)
 	{
@@ -1085,8 +1091,6 @@ void Host_Tell_f(void)
 {
 	client_t *client;
 	client_t *save;
-	int		j;
-	char	*p;
 	char	text[64];
 
 	if (cmd_source == src_command)
@@ -1101,22 +1105,25 @@ void Host_Tell_f(void)
 	Q_strcpy(text, host_client->name);
 	Q_strcat(text, ": ");
 
-	p = Cmd_Args();
+	const char *p = Cmd_Args();
 
+	size_t p_len = Q_strlen(p);
 // remove quotes if present
 	if (*p == '"')
 	{
 		p++;
-		p[Q_strlen(p)-1] = 0;
+		p_len -= 2;
 	}
 
 // check length & truncate if necessary
-	j = sizeof(text) - 2 - Q_strlen(text);  // -2 for /n and null terminator
-	if (Q_strlen(p) > j)
-		p[j] = 0;
+	size_t text_len = Q_strlen(text);
+	size_t j = sizeof(text) - 2 - text_len;  // -2 for /n and null terminator
+	if (p_len > j)
+		p_len = j;
 
-	strcat (text, p);
-	strcat (text, "\n");
+	memcpy (text + text_len, p, p_len);
+	text[text_len + p_len] = '\n';
+	text[text_len + p_len+1] = 0;
 
 	save = host_client;
 	for (j = 0, client = svs.clients; j < svs.maxclients; j++, client++)
@@ -1230,11 +1237,11 @@ void Host_Pause_f (void)
 
 		if (sv.paused)
 		{
-			SV_BroadcastPrintf ("%s paused the game\n", pr_strings + sv_player->v.netname);
+			SV_BroadcastPrintf ("%s paused the game\n", PR_GetString(sv_player->v.netname));
 		}
 		else
 		{
-			SV_BroadcastPrintf ("%s unpaused the game\n",pr_strings + sv_player->v.netname);
+			SV_BroadcastPrintf ("%s unpaused the game\n",PR_GetString(sv_player->v.netname));
 		}
 
 	// send notification to all clients
@@ -1308,7 +1315,7 @@ void Host_Spawn_f (void)
 		memset (&ent->v, 0, progs->entityfields * 4);
 		ent->v.colormap = NUM_FOR_EDICT(ent);
 		ent->v.team = (host_client->colors & 15) + 1;
-		ent->v.netname = host_client->name - pr_strings;
+		PR_SetString(&ent->v.netname, host_client->name);
 
 		// copy spawn parms out of the client_t
 
@@ -1424,7 +1431,6 @@ Kicks a user off of the server
 void Host_Kick_f (void)
 {
 	char		*who;
-	char		*message = NULL;
 	client_t	*save;
 	int			i;
 	qboolean	byNumber = false;
@@ -1477,6 +1483,7 @@ void Host_Kick_f (void)
 		if (host_client == save)
 			return;
 
+		const char *message = NULL;
 		if (Cmd_Argc() > 2)
 		{
 			message = COM_Parse(Cmd_Args());
@@ -1515,8 +1522,6 @@ Host_Give_f
 */
 void Host_Give_f (void)
 {
-	char	*t;
-	int		v, w;
 	eval_t	*val;
 
 	if (cmd_source == src_command)
@@ -1528,8 +1533,8 @@ void Host_Give_f (void)
 	if (pr_global_struct->deathmatch && !host_client->privileged)
 		return;
 
-	t = Cmd_Argv(1);
-	v = atoi (Cmd_Argv(2));
+	const char *t = Cmd_Argv(1);
+	const int v = atoi (Cmd_Argv(2));
 	
 	switch (t[0])
 	{
@@ -1675,7 +1680,7 @@ edict_t	*FindViewthing (void)
 	for (i=0 ; i<sv.num_edicts ; i++)
 	{
 		e = EDICT_NUM(i);
-		if ( !strcmp (pr_strings + e->v.classname, "viewthing") )
+		if ( !strcmp (PR_GetString(e->v.classname), "viewthing") )
 			return e;
 	}
 	Con_Printf ("No viewthing on map\n");

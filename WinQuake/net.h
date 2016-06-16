@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -154,7 +155,7 @@ extern int			net_numsockets;
 
 typedef struct
 {
-	char		*name;
+	const char	*name;
 	qboolean	initialized;
 	int			controlSock;
 	int			(*Init) (void);
@@ -165,25 +166,24 @@ typedef struct
 	int 		(*Connect) (int socket, struct qsockaddr *addr);
 	int 		(*CheckNewConnections) (void);
 	int 		(*Read) (int socket, byte *buf, int len, struct qsockaddr *addr);
-	int 		(*Write) (int socket, byte *buf, int len, struct qsockaddr *addr);
-	int 		(*Broadcast) (int socket, byte *buf, int len);
-	char *		(*AddrToString) (struct qsockaddr *addr);
-	int 		(*StringToAddr) (char *string, struct qsockaddr *addr);
+	int 		(*Write) (int socket, const byte *buf, int len, struct qsockaddr *addr);
+	int 		(*Broadcast) (int socket, const byte *buf, int len);
+	const char* (*AddrToString) (const struct qsockaddr *addr);
+	int 		(*StringToAddr) (const char *string, struct qsockaddr *addr);
 	int 		(*GetSocketAddr) (int socket, struct qsockaddr *addr);
-	int 		(*GetNameFromAddr) (struct qsockaddr *addr, char *name);
-	int 		(*GetAddrFromName) (char *name, struct qsockaddr *addr);
-	int			(*AddrCompare) (struct qsockaddr *addr1, struct qsockaddr *addr2);
+	int 		(*GetNameFromAddr) (const struct qsockaddr *addr, char *name);
+	int 		(*GetAddrFromName) (const char *name, struct qsockaddr *addr);
+	int			(*AddrCompare) (const struct qsockaddr *addr1, const struct qsockaddr *addr2);
 	int			(*GetSocketPort) (struct qsockaddr *addr);
 	int			(*SetSocketPort) (struct qsockaddr *addr, int port);
 } net_landriver_t;
 
 #define	MAX_NET_DRIVERS		8
-extern int 				net_numlandrivers;
-extern net_landriver_t	net_landrivers[MAX_NET_DRIVERS];
+
 
 typedef struct
 {
-	char		*name;
+	const char	*name;
 	qboolean	initialized;
 	int			(*Init) (void);
 	void		(*Listen) (qboolean state);
@@ -200,21 +200,24 @@ typedef struct
 	int			controlSock;
 } net_driver_t;
 
-extern int			net_numdrivers;
-extern net_driver_t	net_drivers[MAX_NET_DRIVERS];
+extern	size_t			net_numdrivers;
+extern	net_driver_t	net_drivers[MAX_NET_DRIVERS];
 
-extern int			DEFAULTnet_hostport;
-extern int			net_hostport;
+extern	size_t			net_numlandrivers;
+extern	net_landriver_t	net_landrivers[MAX_NET_DRIVERS];
 
-extern int net_driverlevel;
-extern cvar_t		hostname;
-extern char			playername[];
-extern int			playercolor;
+extern	int			net_DEFAULT_hostport;
+extern	int			net_hostport;
 
-extern int		messagesSent;
-extern int		messagesReceived;
-extern int		unreliableMessagesSent;
-extern int		unreliableMessagesReceived;
+extern	int			net_driverlevel;
+extern	cvar_t		net_hostname;
+//extern	const char *net_playername;
+//extern	int			net_playercolor;
+
+extern	int		net_messagesSent;
+extern	int		net_messagesReceived;
+extern	int		net_unreliableMessagesSent;
+extern	int		net_unreliableMessagesReceived;
 
 qsocket_t *NET_NewQSocket (void);
 void NET_FreeQSocket(qsocket_t *);

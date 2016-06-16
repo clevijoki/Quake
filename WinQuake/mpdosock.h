@@ -1,3 +1,4 @@
+#pragma once
 /* WINSOCK.H--definitions to be used with the WINSOCK.DLL
  * Copyright (c) 1993-1995, Microsoft Corp. All rights reserved.
  *

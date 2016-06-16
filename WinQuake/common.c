@@ -23,10 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define NUM_SAFE_ARGVS  7
 
-static char     *largv[MAX_NUM_ARGVS + NUM_SAFE_ARGVS + 1];
-static char     *argvdummy = " ";
+static const char     *largv[MAX_NUM_ARGVS + NUM_SAFE_ARGVS + 1];
+static const char     *argvdummy = " ";
 
-static char     *safeargvs[NUM_SAFE_ARGVS] =
+static const char     *safeargvs[NUM_SAFE_ARGVS] =
 	{"-stdvid", "-nolan", "-nosound", "-nocdaudio", "-nojoy", "-nomouse", "-dibonly"};
 
 cvar_t  registered = {"registered","0"};
@@ -48,7 +48,7 @@ void COM_InitFilesystem (void);
 
 char	com_token[1024];
 int		com_argc;
-char	**com_argv;
+const char **com_argv;
 
 #define CMDLINE_LENGTH	256
 char	com_cmdline[CMDLINE_LENGTH];
@@ -135,11 +135,11 @@ void InsertLinkAfter (link_t *l, link_t *after)
 ============================================================================
 */
 
-void Q_memset (void *dest, int fill, int count)
+void Q_memset (void *dest, byte fill, size_t count)
 {
 	int             i;
 	
-	if ( (((long)dest | count) & 3) == 0)
+	if ( (((uintptr_t)dest | count) & 3) == 0)
 	{
 		count >>= 2;
 		fill = fill | (fill<<8) | (fill<<16) | (fill<<24);
@@ -151,11 +151,11 @@ void Q_memset (void *dest, int fill, int count)
 			((byte *)dest)[i] = fill;
 }
 
-void Q_memcpy (void *dest, void *src, int count)
+void Q_memcpy (void *dest, const void *src, size_t count)
 {
 	int             i;
 	
-	if (( ( (long)dest | (long)src | count) & 3) == 0 )
+	if (( ( (uintptr_t)dest | (uintptr_t)src | count) & 3) == 0 )
 	{
 		count>>=2;
 		for (i=0 ; i<count ; i++)
@@ -166,7 +166,7 @@ void Q_memcpy (void *dest, void *src, int count)
 			((byte *)dest)[i] = ((byte *)src)[i];
 }
 
-int Q_memcmp (void *m1, void *m2, int count)
+int Q_memcmp (const void *m1, const void *m2, size_t count)
 {
 	while(count)
 	{
@@ -177,7 +177,7 @@ int Q_memcmp (void *m1, void *m2, int count)
 	return 0;
 }
 
-void Q_strcpy (char *dest, char *src)
+void Q_strcpy (char *dest, const char *src)
 {
 	while (*src)
 	{
@@ -186,7 +186,7 @@ void Q_strcpy (char *dest, char *src)
 	*dest++ = 0;
 }
 
-void Q_strncpy (char *dest, char *src, int count)
+void Q_strncpy (char *dest, const char *src, size_t count)
 {
 	while (*src && count--)
 	{
@@ -196,7 +196,7 @@ void Q_strncpy (char *dest, char *src, int count)
 		*dest++ = 0;
 }
 
-int Q_strlen (char *str)
+int Q_strlen (const char *str)
 {
 	int             count;
 	
@@ -207,7 +207,7 @@ int Q_strlen (char *str)
 	return count;
 }
 
-char *Q_strrchr(char *s, char c)
+const char *Q_strrchr(const char *s, char c)
 {
     int len = Q_strlen(s);
     s += len;
@@ -216,35 +216,39 @@ char *Q_strrchr(char *s, char c)
     return 0;
 }
 
-void Q_strcat (char *dest, char *src)
+void Q_strcat (char *dest, const char *src)
 {
 	dest += Q_strlen(dest);
 	Q_strcpy (dest, src);
 }
 
-int Q_strcmp (char *s1, char *s2)
+int Q_strcmp (const char *s1, const char *s2)
 {
 	while (1)
 	{
-		if (*s1 != *s2)
-			return -1;              // strings not equal    
+		if (*s1 < *s2)
+			return -1;
+
+		if (*s1 > *s2)
+			return 1;
+
 		if (!*s1)
 			return 0;               // strings are equal
 		s1++;
 		s2++;
 	}
-	
-	return -1;
 }
 
-int Q_strncmp (char *s1, char *s2, int count)
+int Q_strncmp (const char *s1, const char *s2, size_t count)
 {
 	while (1)
 	{
 		if (!count--)
 			return 0;
-		if (*s1 != *s2)
-			return -1;              // strings not equal    
+		if (*s1 < *s2)
+			return -1;
+		if (*s1 > *s2)
+			return 1;
 		if (!*s1)
 			return 0;               // strings are equal
 		s1++;
@@ -254,7 +258,7 @@ int Q_strncmp (char *s1, char *s2, int count)
 	return -1;
 }
 
-int Q_strncasecmp (char *s1, char *s2, int n)
+int Q_strncasecmp (const char *s1, const char *s2, size_t n)
 {
 	int             c1, c2;
 	
@@ -284,12 +288,12 @@ int Q_strncasecmp (char *s1, char *s2, int n)
 	return -1;
 }
 
-int Q_strcasecmp (char *s1, char *s2)
+int Q_strcasecmp (const char *s1, const char *s2)
 {
 	return Q_strncasecmp (s1, s2, 99999);
 }
 
-int Q_atoi (char *str)
+int Q_atoi (const char *str)
 {
 	int             val;
 	int             sign;
@@ -348,7 +352,7 @@ int Q_atoi (char *str)
 }
 
 
-float Q_atof (char *str)
+float Q_atof (const char *str)
 {
 	double			val;
 	int             sign;
@@ -433,29 +437,33 @@ float Q_atof (char *str)
 
 qboolean        bigendien;
 
-short   (*BigShort) (short l);
-short   (*LittleShort) (short l);
-int     (*BigLong) (int l);
-int     (*LittleLong) (int l);
+int16_t (*BigShort) (int16_t l);
+int16_t (*LittleShort) (int16_t l);
+int32_t (*BigLong) (int32_t l);
+int32_t (*LittleLong) (int32_t l);
+uint32_t(*BigULong) (uint32_t l);
+uint32_t(*LittleULong) (uint32_t l);
+string_t(*BigString_t) (string_t l);
+string_t(*LittleString_t) (string_t l);
 float   (*BigFloat) (float l);
 float   (*LittleFloat) (float l);
 
-short   ShortSwap (short l)
+int16_t ShortSwap (int16_t l)
 {
 	byte    b1,b2;
 
 	b1 = l&255;
 	b2 = (l>>8)&255;
 
-	return (b1<<8) + b2;
+	return ((int16_t)b1<<8) + b2;
 }
 
-short   ShortNoSwap (short l)
+int16_t ShortNoSwap (int16_t l)
 {
 	return l;
 }
 
-int    LongSwap (int l)
+int32_t LongSwap (int32_t l)
 {
 	byte    b1,b2,b3,b4;
 
@@ -464,10 +472,39 @@ int    LongSwap (int l)
 	b3 = (l>>16)&255;
 	b4 = (l>>24)&255;
 
-	return ((int)b1<<24) + ((int)b2<<16) + ((int)b3<<8) + b4;
+	return ((int32_t)b1<<24) + ((int32_t)b2<<16) + ((int32_t)b3<<8) + b4;
 }
 
-int     LongNoSwap (int l)
+int LongNoSwap (int l)
+{
+	return l;
+}
+
+uint32_t ULongSwap (uint32_t l)
+{
+	byte    b1,b2,b3,b4;
+
+	b1 = l&255;
+	b2 = (l>>8)&255;
+	b3 = (l>>16)&255;
+	b4 = (l>>24)&255;
+
+	return ((uint32_t)b1<<24) + ((uint32_t)b2<<16) + ((uint32_t)b3<<8) + b4;
+}
+
+uint32_t ULongNoSwap (uint32_t l)
+{
+	return l;
+}
+
+string_t String_tSwap(string_t l)
+{
+	string_t result;
+	result.value = LongSwap(l.value);
+	return result;
+}
+
+string_t String_tNoSwap(string_t l)
 {
 	return l;
 }
@@ -525,7 +562,7 @@ void MSG_WriteByte (sizebuf_t *sb, int c)
 	byte    *buf;
 	
 #ifdef PARANOID
-	if (c < 0 || c > 255)
+	if (c < 0 || c > 255 && (c & U_SIGNAL) == 0)
 		Sys_Error ("MSG_WriteByte: range error");
 #endif
 
@@ -538,7 +575,7 @@ void MSG_WriteShort (sizebuf_t *sb, int c)
 	byte    *buf;
 	
 #ifdef PARANOID
-	if (c < ((short)0x8000) || c > (short)0x7fff)
+	if (c < SHRT_MIN || c > SHRT_MAX)
 		Sys_Error ("MSG_WriteShort: range error");
 #endif
 
@@ -573,7 +610,7 @@ void MSG_WriteFloat (sizebuf_t *sb, float f)
 	SZ_Write (sb, &dat.l, 4);
 }
 
-void MSG_WriteString (sizebuf_t *sb, char *s)
+void MSG_WriteString (sizebuf_t *sb, const char *s)
 {
 	if (!s)
 		SZ_Write (sb, "", 1);
@@ -594,8 +631,8 @@ void MSG_WriteAngle (sizebuf_t *sb, float f)
 //
 // reading functions
 //
-int                     msg_readcount;
-qboolean        msg_badread;
+uint32_t	msg_readcount;
+qboolean	msg_badread;
 
 void MSG_BeginReading (void)
 {
@@ -728,7 +765,7 @@ float MSG_ReadAngle (void)
 
 //===========================================================================
 
-void SZ_Alloc (sizebuf_t *buf, int startsize)
+void SZ_Alloc (sizebuf_t *buf, uint32_t startsize)
 {
 	if (startsize < 256)
 		startsize = 256;
@@ -751,7 +788,7 @@ void SZ_Clear (sizebuf_t *buf)
 	buf->cursize = 0;
 }
 
-void *SZ_GetSpace (sizebuf_t *buf, int length)
+void *SZ_GetSpace (sizebuf_t *buf, uint32_t length)
 {
 	void    *data;
 	
@@ -774,12 +811,12 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 	return data;
 }
 
-void SZ_Write (sizebuf_t *buf, void *data, int length)
+void SZ_Write (sizebuf_t *buf, const void *data, uint32_t length)
 {
 	Q_memcpy (SZ_GetSpace(buf,length),data,length);         
 }
 
-void SZ_Print (sizebuf_t *buf, char *data)
+void SZ_Print (sizebuf_t *buf, const char *data)
 {
 	int             len;
 	
@@ -801,9 +838,9 @@ void SZ_Print (sizebuf_t *buf, char *data)
 COM_SkipPath
 ============
 */
-char *COM_SkipPath (char *pathname)
+const char *COM_SkipPath (const char *pathname)
 {
-	char    *last;
+	const char    *last;
 	
 	last = pathname;
 	while (*pathname)
@@ -820,7 +857,7 @@ char *COM_SkipPath (char *pathname)
 COM_StripExtension
 ============
 */
-void COM_StripExtension (char *in, char *out)
+void COM_StripExtension (const char *in, char *out)
 {
 	while (*in && *in != '.')
 		*out++ = *in++;
@@ -832,7 +869,7 @@ void COM_StripExtension (char *in, char *out)
 COM_FileExtension
 ============
 */
-char *COM_FileExtension (char *in)
+const char *COM_FileExtension (const char *in)
 {
 	static char exten[8];
 	int             i;
@@ -853,11 +890,11 @@ char *COM_FileExtension (char *in)
 COM_FileBase
 ============
 */
-void COM_FileBase (char *in, char *out)
+void COM_FileBase (const char *in, char *out)
 {
-	char *s, *s2;
+	const char *s, *s2;
 	
-	s = in + strlen(in) - 1;
+	s = in + Q_strlen(in) - 1;
 	
 	while (s != in && *s != '.')
 		s--;
@@ -866,11 +903,11 @@ void COM_FileBase (char *in, char *out)
 	;
 	
 	if (s-s2 < 2)
-		strcpy (out,"?model?");
+		Q_strcpy (out,"?model?");
 	else
 	{
 		s--;
-		strncpy (out,s2+1, s-s2);
+		Q_strncpy (out,s2+1, s-s2);
 		out[s-s2] = 0;
 	}
 }
@@ -881,7 +918,7 @@ void COM_FileBase (char *in, char *out)
 COM_DefaultExtension
 ==================
 */
-void COM_DefaultExtension (char *path, char *extension)
+void COM_DefaultExtension (char *path, const char *extension)
 {
 	char    *src;
 //
@@ -908,7 +945,7 @@ COM_Parse
 Parse a token out of a string
 ==============
 */
-char *COM_Parse (char *data)
+const char *COM_Parse (const char *data)
 {
 	int             c;
 	int             len;
@@ -987,7 +1024,7 @@ Returns the position (1 to argc-1) in the program's argument list
 where the given parameter apears, or 0 if not present
 ================
 */
-int COM_CheckParm (char *parm)
+int COM_CheckParm (const char *parm)
 {
 	int             i;
 	
@@ -1054,7 +1091,7 @@ void COM_Path_f (void);
 COM_InitArgv
 ================
 */
-void COM_InitArgv (int argc, char **argv)
+void COM_InitArgv (int argc, const char **argv)
 {
 	qboolean        safe;
 	int             i, j, n;
@@ -1122,8 +1159,9 @@ void COM_InitArgv (int argc, char **argv)
 COM_Init
 ================
 */
-void COM_Init (char *basedir)
+void COM_Init (const char *basedir)
 {
+	basedir = basedir;
 	byte    swaptest[2] = {1,0};
 
 // set the byte swapping variables in a portable manner 
@@ -1134,8 +1172,12 @@ void COM_Init (char *basedir)
 		LittleShort = ShortNoSwap;
 		BigLong = LongSwap;
 		LittleLong = LongNoSwap;
+		BigULong = ULongSwap;
+		LittleULong = ULongNoSwap;
 		BigFloat = FloatSwap;
 		LittleFloat = FloatNoSwap;
+		BigString_t = String_tSwap;
+		LittleString_t = String_tNoSwap;
 	}
 	else
 	{
@@ -1144,8 +1186,13 @@ void COM_Init (char *basedir)
 		LittleShort = ShortSwap;
 		BigLong = LongNoSwap;
 		LittleLong = LongSwap;
+		BigULong = ULongNoSwap;
+		LittleULong = ULongSwap;
 		BigFloat = FloatNoSwap;
 		LittleFloat = FloatSwap;
+		BigString_t = String_tNoSwap;
+		LittleString_t = String_tSwap;
+
 	}
 
 	Cvar_RegisterVariable (&registered);
@@ -1278,7 +1325,7 @@ COM_WriteFile
 The filename will be prefixed by the current game directory
 ============
 */
-void COM_WriteFile (char *filename, void *data, int len)
+void COM_WriteFile (const char *filename, const void *data, size_t len)
 {
 	int             handle;
 	char    name[MAX_OSPATH];
@@ -1329,7 +1376,7 @@ Copies a file over from the net to the local cache, creating any directories
 needed.  This is for the convenience of developers using ISDN from home.
 ===========
 */
-void COM_CopyFile (char *netpath, char *cachepath)
+void COM_CopyFile (const char *netpath, char *cachepath)
 {
 	int             in, out;
 	int             remaining, count;
@@ -1362,7 +1409,7 @@ Finds the file in the search path.
 Sets com_filesize and one of handle or file
 ===========
 */
-int COM_FindFile (char *filename, int *handle, FILE **file)
+int COM_FindFile (const char *filename, int *handle, FILE **file)
 {
 	searchpath_t    *search;
 	char            netpath[MAX_OSPATH];
@@ -1482,7 +1529,7 @@ returns a handle and a length
 it may actually be inside a pak file
 ===========
 */
-int COM_OpenFile (char *filename, int *handle)
+int COM_OpenFile (const char *filename, int *handle)
 {
 	return COM_FindFile (filename, handle, NULL);
 }
@@ -1495,7 +1542,7 @@ If the requested file is inside a packfile, a new FILE * will be opened
 into the file.
 ===========
 */
-int COM_FOpenFile (char *filename, FILE **file)
+int COM_FOpenFile (const char *filename, FILE **file)
 {
 	return COM_FindFile (filename, NULL, file);
 }
@@ -1529,8 +1576,8 @@ Allways appends a 0 byte.
 */
 cache_user_t *loadcache;
 byte    *loadbuf;
-int             loadsize;
-byte *COM_LoadFile (char *path, int usehunk)
+size_t loadsize;
+byte *COM_LoadFile (const char *path, int usehunk)
 {
 	int             h;
 	byte    *buf;
@@ -1578,24 +1625,24 @@ byte *COM_LoadFile (char *path, int usehunk)
 	return buf;
 }
 
-byte *COM_LoadHunkFile (char *path)
+byte *COM_LoadHunkFile (const char *path)
 {
 	return COM_LoadFile (path, 1);
 }
 
-byte *COM_LoadTempFile (char *path)
+byte *COM_LoadTempFile (const char *path)
 {
 	return COM_LoadFile (path, 2);
 }
 
-void COM_LoadCacheFile (char *path, struct cache_user_s *cu)
+void COM_LoadCacheFile (const char *path, struct cache_user_s *cu)
 {
 	loadcache = cu;
 	COM_LoadFile (path, 3);
 }
 
 // uses temp hunk if larger than bufsize
-byte *COM_LoadStackFile (char *path, void *buffer, int bufsize)
+byte *COM_LoadStackFile (const char *path, void *buffer, size_t bufsize)
 {
 	byte    *buf;
 	
@@ -1616,7 +1663,7 @@ Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files.
 =================
 */
-pack_t *COM_LoadPackFile (char *packfile)
+pack_t *COM_LoadPackFile (const char *packfile)
 {
 	dpackheader_t   header;
 	int                             i;
@@ -1686,7 +1733,7 @@ Sets com_gamedir, adds the directory to the head of the path,
 then loads and adds pak1.pak pak2.pak ... 
 ================
 */
-void COM_AddGameDirectory (char *dir)
+void COM_AddGameDirectory (const char *dir)
 {
 	int                             i;
 	searchpath_t    *search;
@@ -1731,7 +1778,7 @@ COM_InitFilesystem
 */
 void COM_InitFilesystem (void)
 {
-	int             i, j;
+	int             i;
 	char    basedir[MAX_OSPATH];
 	searchpath_t    *search;
 
@@ -1745,7 +1792,7 @@ void COM_InitFilesystem (void)
 	else
 		strcpy (basedir, host_parms.basedir);
 
-	j = strlen (basedir);
+	size_t j = strlen (basedir);
 
 	if (j > 0)
 	{
@@ -1807,7 +1854,7 @@ void COM_InitFilesystem (void)
 				break;
 			
 			search = Hunk_Alloc (sizeof(searchpath_t));
-			if ( !strcmp(COM_FileExtension(com_argv[i]), "pak") )
+			if ( !Q_strcmp(COM_FileExtension(com_argv[i]), "pak") )
 			{
 				search->pack = COM_LoadPackFile (com_argv[i]);
 				if (!search->pack)

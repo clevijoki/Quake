@@ -1,3 +1,4 @@
+#pragma once
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -330,19 +331,19 @@ void CL_UpdateTEnts (void);
 void CL_ClearState (void);
 
 
-int  CL_ReadFromServer (void);
+size_t CL_ReadFromServer (void);
 void CL_WriteToServer (usercmd_t *cmd);
 void CL_BaseMove (usercmd_t *cmd);
 
 
 float CL_KeyState (kbutton_t *key);
-char *Key_KeynumToString (int keynum);
+const char *Key_KeynumToString (int keynum);
 
 //
 // cl_demo.c
 //
 void CL_StopPlayback (void);
-int CL_GetMessage (void);
+size_t CL_GetMessage (void);
 
 void CL_Stop_f (void);
 void CL_Record_f (void);
